@@ -1,18 +1,63 @@
 #cloud-config
 
-# Atualiza a lista de pacotes antes das instalações
+# Atualiza a lista de pacotes antes das instalacoes
+package_update: true
 
-
-# Cria um usuário administrador
-
+# Cria um usuario administrador
+# - grupo sudo + sudo NOPASSWD (sem senha para comandos administrativos)
+# - login por senha desativado; acesso somente via chave SSH
+# - apenas a chave PUBLICA e colocada aqui (nunca a privada)
+users:
+  - name: meu-usuario
+    gecos: Usuario Administrador
+    groups: sudo
+    shell: /bin/bash
+    sudo: "ALL=(ALL) NOPASSWD:ALL"
+    lock_passwd: true
+    ssh_authorized_keys:
+      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMT6mb6coi90LkZlYjMuO71+slf/piBcQ7yjY0aHywE8 meu-usuario@windows
 
 # Instala os softwares declarativamente
+packages:
+  - docker.io
+  - nginx
 
+# Cria uma pagina personalizada
+write_files:
+  - path: /var/www/html/index.html
+    owner: root:root
+    permissions: "0644"
+    content: |
+      <!DOCTYPE html>
+      <html lang="pt-BR">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Cloud-Init Lab</title>
+        <style>
+          body { font-family: Arial, sans-serif; background: #0f172a; color: #e2e8f0;
+                 display: flex; align-items: center; justify-content: center;
+                 min-height: 100vh; margin: 0; text-align: center; }
+          .card { background: #1e293b; padding: 2rem 3rem; border-radius: 12px; }
+          h1 { color: #38bdf8; }
+          code { background: #0f172a; padding: 2px 8px; border-radius: 4px; }
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <h1>Servidor provisionado com Cloud-Init!</h1>
+          <p>Host: <code>servidor-devops</code></p>
+          <p>Nginx e Docker instalados automaticamente.</p>
+          <p>Lab DevOps - Vagrant + Cloud-Init</p>
+        </div>
+      </body>
+      </html>
 
-# Cria uma página personalizada
-
-
-# Executa comandos após as etapas de configuração
-
+# Executa comandos apos as etapas de configuracao
+runcmd:
+  - systemctl enable --now nginx
+  - systemctl enable --now docker
+  - usermod -aG docker meu-usuario
 
 # Mensagem final registrada nos logs
+final_message: "Cloud-Init concluido com sucesso em $UPTIME segundos! Docker e Nginx prontos. Data: $TIMESTAMP"
